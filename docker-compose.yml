@@ -1,0 +1,55 @@
+version: '3.3'
+
+services:
+  postgresql:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: 'root'
+      POSTGRES_PASSWORD: 'root'
+      POSTGRES_DB: 'qiuying-rpa'
+    ports:
+      - 2345:5432
+    volumes:
+      - ./postgresql-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+    ports:
+      - 9736:6379
+    volumes:
+      - ./redis-data:/data
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+
+  redis_admin:
+    image: erikdubbelboer/phpredisadmin
+    environment:
+      REDIS_1_HOST: redis
+      REDIS_1_PORT: 6379
+    ports:
+      - 12000:80
+
+  vue:
+    image: nginx
+    volumes:
+      - ./vue:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - 2021:80
+    depends_on:
+      - flask
+
+  flask:
+    build: .
+    working_dir: /flask
+    volumes:
+      - ./flask:/flask
+      - ./flask-data:/flask/static
+      - ./logs:/flask/logs
+    command: /bin/bash -c "chmod +x ./wait-for-it.sh && ./wait-for-it.sh -t 20 postgresql:5432 -- python app.py && gunicorn -w=4 app:app -b 0.0.0.0:5000"
+    depends_on:
+      - postgresql
