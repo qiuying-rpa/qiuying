@@ -32,6 +32,8 @@ services:
   console: 
     build: console
     working_dir: /console
+    environment:
+      MODE: "prod"
     volumes:
       - ./data/console/data:/console/data
       - ./data/console/static:/console/static
